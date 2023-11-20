@@ -1,2 +1,2 @@
 all:
-	g++ Solution.cpp Parser.cpp FunctionParameters.cpp FunctionRealization.cpp -o sol
+	g++ -fopenmp Solution.cpp Parser.cpp FunctionParameters.cpp FunctionRealization.cpp -o sol

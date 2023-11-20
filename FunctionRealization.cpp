@@ -20,6 +20,7 @@ long double FunctionRealization::GetAnalyticalSolve(long double x, long double y
 }
 
 void FunctionRealization::SetBordersValues(){
+    #pragma omp parallel for collapse(3)
     for(int i = 0; i < params.N; i++){
         for(int k = 0; k < params.N; k++){
             for(int t = 0; t < params.K; t++){
@@ -43,6 +44,7 @@ long double FunctionRealization::GetLaplasian(int i, int j, int k, int t){
 }
 
 void FunctionRealization::SetZeroTimeValues(){
+    #pragma omp parallel for collapse(3)
     for(int i = 1; i < params.N - 1; i++){
         for(int j = 1; j < params.N - 1; j++){
             for(int k = 1; k < params.N - 1; k++){
@@ -53,6 +55,7 @@ void FunctionRealization::SetZeroTimeValues(){
 }
 
 void FunctionRealization::SetOneTimeValues(){
+    #pragma omp parallel for collapse(3)
     for(int i = 1; i < params.N - 1; i++){
         for(int j = 1; j < params.N - 1; j++){
             for(int k = 1; k < params.N - 1; k++){
@@ -63,6 +66,7 @@ void FunctionRealization::SetOneTimeValues(){
 }
 
 void FunctionRealization::SetInteriorValues(){
+    #pragma omp parallel for collapse(4)
     for(int i = 1; i < params.N - 1; i++){
         for(int j = 1; j < params.N - 1; j++){
             for(int k = 1; k < params.N - 1; k++){

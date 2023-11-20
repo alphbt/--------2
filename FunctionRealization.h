@@ -1,3 +1,4 @@
+#include "omp.h"
 #include "FunctionParameters.h"
 #include <vector>
 #include <cmath>
