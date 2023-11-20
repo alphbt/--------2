@@ -1,0 +1,2 @@
+all:
+	g++ Solution.cpp Parser.cpp FunctionParameters.cpp FunctionRealization.cpp -o sol
