@@ -4,7 +4,7 @@ void FunctionParameters::ComputeDependParameters(){
     hx = Lx / N;
     hy = Ly / N;
     hz = Lz / N;
-    t0 = ((long double)T) / K;
+    t0 = T / K;
 }
 
 FunctionParameters::FunctionParameters(){

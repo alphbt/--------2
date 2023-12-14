@@ -14,5 +14,5 @@ class Parser{
         std::vector<std::string> tokens;
 
         int int_parse(const std::string &option, int default_value);
-        long double double_parse(const std::string &option, long double default_value);
+        double double_parse(const std::string &option, double default_value);
 };

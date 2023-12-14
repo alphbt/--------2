@@ -10,20 +10,23 @@ using namespace std;
 
 class FunctionRealization{
     private:
-        FunctionParameters params;
+        FunctionParameters params = FunctionParameters();
         vector<vector<vector<vector<long double>>>> u;
-        long double a2 = 1 / (4 * M_PI * M_PI);
+        vector<double> error;
+        double a2 = 1 / (4 * M_PI * M_PI);
         void SetBordersValues();
         void SetInteriorValues();
         void SetZeroTimeValues();
         void SetOneTimeValues();
-        long double GetAnalyticalSolve(long double x, long double y, long double z, long double t);
-        long double GetLaplasian(int i, int j, int k, int t);
+        double GetAnalyticalSolve(double x, double y, double z, double t);
+        double GetLaplasian(int i, int j, int k, int t);
         void SaveErrorFile();
         void SaveProjectionsFiles();
+        void ComputeError();
 
     public:
         FunctionRealization(const FunctionParameters &params);
         void ComputeFunction();
+        double GetMaxError();
         void SaveFunctionsValuesToTxtFiles();
 };

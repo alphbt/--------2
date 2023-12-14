@@ -1,7 +1,16 @@
 #include "FunctionRealization.h"
 
-FunctionRealization::FunctionRealization(const FunctionParameters &params){
-    this->params = params;
+FunctionRealization::FunctionRealization(const FunctionParameters &params){ //инициализация параметров и векторов
+    this->params.N = params.N;
+    this->params.T = params.T;
+    this->params.K = params.K;
+    this->params.Lx = params.Lx;
+    this->params.Ly = params.Ly;
+    this->params.Lz = params.Lz;
+    this->params.hx = params.hx;
+    this->params.hy = params.hy;
+    this->params.hz = params.hz;
+    this->params.t0 = params.t0;
     u.resize(params.N);
     for(int i = 0; i < params.N; i++){
         u[i].resize(params.N);
@@ -12,14 +21,15 @@ FunctionRealization::FunctionRealization(const FunctionParameters &params){
             }
         }
     }
+    error.resize(params.K);
 }
 
-long double FunctionRealization::GetAnalyticalSolve(long double x, long double y, long double z, long double t){
+double FunctionRealization::GetAnalyticalSolve(double x, double y, double z, double t){ // аналитическое решение
     return sin(2 * M_PI / params.Lx * x) * sin(M_PI / params.Ly * y) * sin(M_PI / params.Lz * z) * 
             cos(t * sqrt(4/(params.Lx*params.Lx) + 1/(params.Ly*params.Ly) + 1/(params.Lz*params.Lz)) / 2.0 );
 }
 
-void FunctionRealization::SetBordersValues(){
+void FunctionRealization::SetBordersValues(){ // граничные условия
     #pragma omp parallel for
     for(int i = 0; i < params.N; i++){
         #pragma omp parallel for
@@ -37,7 +47,7 @@ void FunctionRealization::SetBordersValues(){
     }
 }
 
-long double FunctionRealization::GetLaplasian(int i, int j, int k, int t){
+double FunctionRealization::GetLaplasian(int i, int j, int k, int t){ //лапасиан
     long double ux, uy, uz;
     ux = u[i-1][j][k][t] - 2*u[i][j][k][t] + u[i+1][j][k][t];
     uy = u[i][j-1][k][t] - 2*u[i][j][k][t] + u[i][j+1][k][t];
@@ -45,12 +55,12 @@ long double FunctionRealization::GetLaplasian(int i, int j, int k, int t){
     return ux / params.hx + uy / params.hy + uz / params.hz;
 }
 
-void FunctionRealization::SetZeroTimeValues(){
+void FunctionRealization::SetZeroTimeValues(){ // вычисление u^0
     #pragma omp parallel for
     for(int i = 1; i < params.N - 1; i++){
-         #pragma omp parallel for
+        #pragma omp parallel for
         for(int j = 1; j < params.N - 1; j++){
-             #pragma omp parallel for
+            #pragma omp parallel for
             for(int k = 1; k < params.N - 1; k++){
                 u[i][j][k][0] = GetAnalyticalSolve(i*params.hx, j*params.hy, k*params.hz, 0);
             }
@@ -58,7 +68,7 @@ void FunctionRealization::SetZeroTimeValues(){
     }
 }
 
-void FunctionRealization::SetOneTimeValues(){
+void FunctionRealization::SetOneTimeValues(){ // вычисление u^1
     #pragma omp parallel for collapse(3)
     for(int i = 1; i < params.N - 1; i++){
         for(int j = 1; j < params.N - 1; j++){
@@ -69,7 +79,7 @@ void FunctionRealization::SetOneTimeValues(){
     }
 }
 
-void FunctionRealization::SetInteriorValues(){
+void FunctionRealization::SetInteriorValues(){  // вычисление функции на внутренней сетке
     #pragma omp parallel for collapse(4)
     for(int i = 1; i < params.N - 1; i++){
         for(int j = 1; j < params.N - 1; j++){
@@ -83,29 +93,46 @@ void FunctionRealization::SetInteriorValues(){
     }
 }
 
-void FunctionRealization::ComputeFunction(){
-    SetBordersValues();
+void FunctionRealization::ComputeFunction(){ // основные вычисления
     SetZeroTimeValues();
     SetOneTimeValues();
     SetInteriorValues();
+    SetBordersValues();
+    ComputeError();
+}
+
+void FunctionRealization::ComputeError(){ // подсчет ошибки
+    #pragma omp parallel for
+    for(int t = 0; t < params.K; t++){
+        double max_error = 0;
+        #pragma omp parallel for reduction(max:max_error)
+        for(int i = 1; i < params.N - 1; i++){
+            #pragma omp parallel for reduction(max:max_error)
+            for(int j = 1; j < params.N - 1; j++){
+                #pragma omp parallel for reduction(max:max_error)
+                for(int k = 1; k < params.N - 1; k++){
+                    double err = abs(u[i][j][k][t] - GetAnalyticalSolve(i*params.hx, j*params.hy, k*params.hx, params.t0*t));
+                    max_error = max(err, max_error);
+                }
+            }
+        }
+        error[t] = max_error;
+    }
+}
+
+double FunctionRealization::GetMaxError(){
+    double max_err = error[0];
+    for(int i = 1; i < params.K; i++){
+        max_err = max(max_err, error[i]);
+    }
+    return max_err;
 }
 
 void FunctionRealization::SaveErrorFile(){
     ofstream errorFile("error.txt");
-
-    for(int t = 0; t < params.K; t++){
-        long double max_error = 0;
-        for(int i = 0; i < params.N; i++){
-            for(int j = 0; j < params.N; j++){
-                for(int k = 0; k < params.N; k++){
-                    long double err = abs(u[i][j][k][t] - GetAnalyticalSolve(i*params.hx, j*params.hy, k*params.hx, params.t0*t));
-                    if(err > max_error){
-                        max_error = err;
-                    } 
-                }
-            }
-        }
-        errorFile << max_error << endl;
+    
+    for(int i = 0; i < params.K; i++){
+        errorFile << error[i] << endl;
     }
 }
 

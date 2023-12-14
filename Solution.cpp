@@ -14,6 +14,8 @@ int main(int argc, char * argv[])
     setprecision(9);
     double time_taken = end - start; 
     cout << "Time taken by program is : " << time_taken << " sec " << endl; 
+    double err = solve.GetMaxError();
+    cout << "Max error is : " << err << endl;
     solve.SaveFunctionsValuesToTxtFiles();
     return 0;
 }

@@ -1,6 +1,8 @@
 #include "Parser.h"
 #include <cmath>
 
+#include <iostream>
+
 Parser::Parser(int argc, char **argv){
     for (int i=1; i < argc; ++i)
         this->tokens.push_back(std::string(argv[i]));
@@ -18,9 +20,9 @@ const std::string&  Parser::GetCmdOption(const std::string &option) const{
 
 FunctionParameters Parser::Parse(){
     FunctionParameters params = FunctionParameters();
-    params.N = int_parse(GetCmdOption("N"), 50);
-    params.T = int_parse(GetCmdOption("T"), 1);
-    params.K = int_parse(GetCmdOption("K"), 100);
+    params.N = int_parse(GetCmdOption("N"), 128);
+    params.T = double_parse(GetCmdOption("T"), 0.000001);
+    params.K = int_parse(GetCmdOption("K"), 20);
     params.Lx = double_parse(GetCmdOption("Lx"), 1);
     params.Ly = double_parse(GetCmdOption("Ly"), 1);
     params.Lz = double_parse(GetCmdOption("Lz"), 1);
@@ -38,7 +40,7 @@ int Parser::int_parse(const std::string &option, int default_value){
     }
 }
 
-long double Parser::double_parse(const std::string &option, long double default_value){
+double Parser::double_parse(const std::string &option, double default_value){
     if (option == "") return default_value;
     if (option == "pi") return M_PI;
     try{
